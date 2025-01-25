@@ -1,6 +1,9 @@
 import discord
+import os
+from dotenv import load_dotenv
 
-TOKEN = '19122f0dc17e5e1e08cf350d5e10eb91d32e2363a29d9649385a9a2219b77484'
+load_dotenv()
+BOT_TOKEN = os.getenv('BOT_TOKEN')
 
 class Greeting(discord.Client):
     async def greeting(self):
