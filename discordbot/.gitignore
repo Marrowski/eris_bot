@@ -175,3 +175,4 @@ cython_debug/
 
 database.py
 request_api.py
+test.py
