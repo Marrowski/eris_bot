@@ -10,6 +10,7 @@ import os
 
 from request_api import find_anime
 from database import insert_data
+from request_api import chat_gpt
 
 import os
 from dotenv import load_dotenv
@@ -83,12 +84,12 @@ async def play(ctx, url: str):
         
         while vc.is_playing():
             await asyncio.sleep(1)
-        await ctx.send(f'Bot has successfully finished playing media.')  
+        await ctx.send(f'🕵️‍♀️ Bot has successfully finished playing media.')  
         
     
         if len(vc.channel.members) == 1:
             await vc.disconnect()
-            await ctx.send(f'No members left in {voice_channel.name}, disconnecting...')
+            await ctx.send(f'👨🏻‍💻 No members left in {voice_channel.name}, disconnecting...')
     else:
         await ctx.send(f'❌ {ctx.author.mention}, connect to a voice channel first!')
         
@@ -102,6 +103,7 @@ async def stop(ctx):
     else:
         await ctx.send(f'❌ Bot is not connected to voice channel.')
         
+        
 @bot.command()
 async def dice(ctx):
     await ctx.send('Let`s roll the dice...')
@@ -113,6 +115,23 @@ async def dice(ctx):
 @bot.command(name='anime')
 async def anime_command(ctx, title:str):
     await find_anime(ctx, title)
+    
+    
+@bot.command(name='request')
+async def request_command(ctx):
+    await ctx.send("📝 Введіть ваш запит:")
+    
+    def check(m):
+        return m.author == ctx.author and m.channel == ctx.channel
+    
+    try:
+        user_msg = await bot.wait_for('message', check=check, timeout=60)
+    except asyncio.TimeoutError:
+        await ctx.send("⏳ Час вичерпано! Введіть команду ще раз.")
+        return
+    
+    await chat_gpt(ctx, user_msg.content)
+    
 
 async def info(ctx):
     user = ctx.author
