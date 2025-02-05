@@ -58,11 +58,10 @@ async def get_audio_url(url):
             return info.get('url', '').strip()
     
     return await loop.run_in_executor(None, fetch_url)
-    
+
 
 @bot.command()
 async def play(ctx, url: str):
-    global voice_channel
     if ctx.author.voice and ctx.author.voice.channel:
         voice_channel = ctx.author.voice.channel
         audio_url = await get_audio_url(url)
@@ -78,11 +77,18 @@ async def play(ctx, url: str):
         ffmpeg_options = {
             'options': '-vn'
         }
-        vc.play(discord.FFmpegPCMAudio(audio_url, **ffmpeg_options))
+        before_options = '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5'
+        vc.play(discord.FFmpegPCMAudio(audio_url, **ffmpeg_options, before_options=before_options))
         await ctx.send(f'Your media is now playing in {voice_channel.name}.')
-
+        
         while vc.is_playing():
             await asyncio.sleep(1)
+        await ctx.send(f'Bot has successfully finished playing media.')  
+        
+    
+        if len(vc.channel.members) == 1:
+            await vc.disconnect()
+            await ctx.send(f'No members left in {voice_channel.name}, disconnecting...')
     else:
         await ctx.send(f'❌ {ctx.author.mention}, connect to a voice channel first!')
         
@@ -92,9 +98,9 @@ async def stop(ctx):
     vc = ctx.voice_client
     if vc:
         await vc.disconnect()
-        await ctx.send(f'Bot has been disconnected from the channel: {voice_channel}')
+        await ctx.send(f'⛔ Bot has been disconnected from the channel: {voice_channel}')
     else:
-        await ctx.send('Bot is not connected to voice channel.')
+        await ctx.send(f'❌ Bot is not connected to voice channel.')
         
 @bot.command()
 async def dice(ctx):
