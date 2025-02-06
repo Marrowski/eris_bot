@@ -108,7 +108,7 @@ async def stop(ctx):
 async def dice(ctx):
     await ctx.send('Let`s roll the dice...')
     await asyncio.sleep(2)
-    await ctx.send(f'Your number is: {random.randrange(0, 6)}!')
+    await ctx.send(f'Your number is: {random.randint(1, 6)}!')
     
         
 
@@ -119,7 +119,7 @@ async def anime_command(ctx, title:str):
     
 @bot.command(name='request')
 async def request_command(ctx):
-    await ctx.send("📝 Введіть ваш запит:")
+    await ctx.send("📝 What do you want to find?")
     
     def check(m):
         return m.author == ctx.author and m.channel == ctx.channel
@@ -127,7 +127,7 @@ async def request_command(ctx):
     try:
         user_msg = await bot.wait_for('message', check=check, timeout=60)
     except asyncio.TimeoutError:
-        await ctx.send("⏳ Час вичерпано! Введіть команду ще раз.")
+        await ctx.send("⏳ Connection timeout. Enter a command again.")
         return
     
     await chat_gpt(ctx, user_msg.content)
