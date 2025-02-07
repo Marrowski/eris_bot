@@ -10,7 +10,6 @@ import os
 
 from request_api import find_anime
 from database import insert_data
-from request_api import chat_gpt
 
 import os
 from dotenv import load_dotenv
@@ -45,6 +44,7 @@ async def on_message(message):
 async def ping(ctx):
     await ctx.send(f'{ctx.author.name}, Hello!')
     
+    
 async def get_audio_url(url): 
     loop = asyncio.get_running_loop()
     
@@ -63,6 +63,7 @@ async def get_audio_url(url):
 
 @bot.command()
 async def play(ctx, url: str):
+    global voice_channel
     if ctx.author.voice and ctx.author.voice.channel:
         voice_channel = ctx.author.voice.channel
         audio_url = await get_audio_url(url)
@@ -85,11 +86,7 @@ async def play(ctx, url: str):
         while vc.is_playing():
             await asyncio.sleep(1)
         await ctx.send(f'🕵️‍♀️ Bot has successfully finished playing media.')  
-        
-    
-        if len(vc.channel.members) == 1:
-            await vc.disconnect()
-            await ctx.send(f'👨🏻‍💻 No members left in {voice_channel.name}, disconnecting...')
+         
     else:
         await ctx.send(f'❌ {ctx.author.mention}, connect to a voice channel first!')
         
@@ -99,38 +96,29 @@ async def stop(ctx):
     vc = ctx.voice_client
     if vc:
         await vc.disconnect()
-        await ctx.send(f'⛔ Bot has been disconnected from the channel: {voice_channel}')
+        await ctx.send(f'⛔ Bot has been disconnected from the channel: {voice_channel.name}')
+        
     else:
         await ctx.send(f'❌ Bot is not connected to voice channel.')
         
         
-@bot.command()
-async def dice(ctx):
-    await ctx.send('Let`s roll the dice...')
-    await asyncio.sleep(2)
-    await ctx.send(f'Your number is: {random.randint(1, 6)}!')
-    
-        
+@bot.event
+async def on_voice_state_update(member, before, after):
+    if before.channel and after.channel is None:
+        if len(before.channel.members) == 1:
+            voice_client = discord.utils.get(bot.voice_clients, guild=member.guild)
+            if voice_client:  
+                await voice_client.disconnect()        
+                
+            
+            text_channel = discord.utils.get(member.guild.text_channels)
+            if text_channel:
+                await text_channel.send(f"No people in {before.channel.name}. Disconnecting...")
 
+        
 @bot.command(name='anime')
 async def anime_command(ctx, title:str):
     await find_anime(ctx, title)
-    
-    
-@bot.command(name='request')
-async def request_command(ctx):
-    await ctx.send("📝 What do you want to find?")
-    
-    def check(m):
-        return m.author == ctx.author and m.channel == ctx.channel
-    
-    try:
-        user_msg = await bot.wait_for('message', check=check, timeout=60)
-    except asyncio.TimeoutError:
-        await ctx.send("⏳ Connection timeout. Enter a command again.")
-        return
-    
-    await chat_gpt(ctx, user_msg.content)
     
 
 async def info(ctx):
